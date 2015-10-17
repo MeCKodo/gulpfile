@@ -11,45 +11,45 @@ var path = './src/main/webapp/public';
 var disPath = './src/main/webapp/';
 
 gulp.task('css',function() {
-	gulp.src('public/css/*.css')
+	gulp.src('src/css/*.css')
 		.pipe(minicss())
-		.pipe(gulp.dest('dist/css'));
+		.pipe(gulp.dest('Public/css'));
 }); 
 gulp.task('images', function () {
-    gulp.src('public/img/*.*')
+    gulp.src('src/images/*.*')
         .pipe(imagemin({
             progressive: true
         }))
-        .pipe(gulp.dest('dist/images'))
+        .pipe(gulp.dest('Public/images'))
 });
 gulp.task('ugjs',function() {
-	gulp.src('public/js/*.js')
+	gulp.src('src/js/*.js')
 		.pipe(ugjs())
-		.pipe(gulp.dest('dist/js'));
+		.pipe(gulp.dest('Public/js'));
 });
 gulp.task('view',function() {
-	gulp.src('public/views/*.html')
-		.pipe(gulp.dest('dist/views'));
+	gulp.src('src/views/**/*.html')
+		.pipe(gulp.dest('Application/Home/View'));
 }); 
 
 gulp.task('testRev', function () {
-    gulp.src('public/views/*.html')
+    gulp.src('src/views/*.html')
         .pipe(rev())
-        .pipe(gulp.dest('dist/views'));
+        .pipe(gulp.dest('Application/Home/View'));
 });
 
-gulp.task('build',['ugjs','css','view','images','testRev'],function() { 
-	//压缩输出线上版本css、js
-	console.log('done');	
-});
+gulp.task('build',['ugjs','css','view','testRev']);
 
 gulp.task('reload',function() {
 	browserSync.init({
-        server: {
-        		//配置静态服务器，启动路径
-            baseDir: "./public/views/"
-        }
+		startPath : "src/views/Home",
+		server: true
     });
 });
 
+browserSync.watch(["src/css/*.css","src/js/*.js","src/views/**/*.html"], function (event, file) {
+    if (event === "change") {
+        browserSync.reload(file);
+    }
+});
 
