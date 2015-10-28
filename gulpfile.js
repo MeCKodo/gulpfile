@@ -29,14 +29,9 @@ gulp.task('ugjs',function() {
 });
 gulp.task('view',function() {
 	gulp.src('src/views/**/*.html')
+		.pipe(rev())
 		.pipe(gulp.dest('Application/Home/View'));
 }); 
-
-gulp.task('testRev', function () {
-    gulp.src('src/views/*.html')
-        .pipe(rev())
-        .pipe(gulp.dest('Application/Home/View'));
-});
 
 gulp.task('build',['ugjs','css','view','testRev']);
 
