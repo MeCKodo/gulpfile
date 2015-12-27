@@ -1,83 +1,99 @@
 var gulp = require('gulp'),
-	ugjs = require('gulp-uglify'),
-	minicss = require('gulp-minify-css'),
-	imagemin = require('gulp-imagemin'),
-	rename = require('gulp-rename'),
-	clean = require('gulp-clean'),
-	replace = require('gulp-replace'),
-	rev = require('gulp-rev-append'),
-	browserSync = require('browser-sync').create(),
-	bsReload = browserSync.reload;
+    ugjs = require('gulp-uglify'),
+    minicss = require('gulp-minify-css'),
+    imagemin = require('gulp-imagemin'),
+    //rename = require('gulp-rename'),
+    clean = require('gulp-clean'),
+    replace = require('gulp-replace'),
+    rev = require('gulp-rev-append'),
+    ifElse = require('gulp-if-else'),
+    htmlreplace = require('gulp-html-replace'),
+    browserSync = require('browser-sync').create(),
+    bsReload = browserSync.reload;
 
 var path = './src/',
-	csspath = './src/css/**/*.css',
-	jspath = './src/js/**/*.js',
-	htmlpath = './src/views/**/*.html';
+    csspath = './src/css/**/*.css',
+    jspath = './src/js/**/*.js',
+    htmlpath = './src/views/**/*.html',
+    ifonpath = './src/webfont/**';
 
 var disPath = './Public/',
-	disCssPath = './public/css',
-	disJsPath = './Public/js',
-	disHtmlPath = './Application/Home/View';
+    disCssPath = './public/css',
+    disJsPath = './Public/js',
+    disHtmlPath = './Application/Home/View',
+    disifonpath = './Public/webfont';
 
+var urlTag = '';
+var NODE_ENV = '';
 
+gulp.task('ugjs',function() {
+    return gulp.src(jspath)
+        .pipe(replace('__target__',urlTag))
+        .pipe(replace('../../','../../Public/'))
+        .pipe(ifElse(NODE_ENV === 'public',ugjs))
+        .pipe(gulp.dest(disJsPath))
+});
 gulp.task('css',function() {
 	gulp.src(csspath)
-		.pipe(minicss())
-		.pipe(gulp.dest(disCssPath));
+		.pipe(ifElse(NODE_ENV === 'public',minicss))
+		.pipe(gulp.dest(disCssPath))
 });
 gulp.task('images', function () {
-	return gulp.src('src/images/*.*')
-		.pipe(imagemin({
-			progressive: true
-		}))
-		.pipe(gulp.dest('Public/images'))
+    return gulp.src('src/images/**/*.*')
+            .pipe(imagemin({
+                progressive: true
+            }))
+            .pipe(gulp.dest('Public/images'))
+            .pipe(gulp.dest('../Public/images'));
 });
-gulp.task('ugjs',function() {
-	return gulp.src(jspath)
-		.pipe(ugjs())
-		.pipe(gulp.dest(disJsPath));
+gulp.task('component',function() {
+   return gulp.src('./src/component/*.html')
+            .pipe(replace('__target__',urlTag))
+            .pipe(gulp.dest('Public/component'))
+            .pipe(gulp.dest('../Public/component'));
 });
-
-gulp.task('view',function() {
-	return gulp.src(htmlpath)
-		.pipe(rev())
-		.pipe(replace('..\/..\/','__PUBLIC__/'))
-		.pipe(replace('<a href="..\/','<a href="__APP__/'))
-		.pipe(gulp.dest(disHtmlPath));
+gulp.task('iconfont', function () {
+    return gulp.src(ifonpath)
+        .pipe(gulp.dest(disifonpath));
+});
+gulp.task('view',['clean'],function() {
+    return gulp.src(htmlpath)
+            .pipe(rev())
+            .pipe(replace('__target__',urlTag))
+            .pipe(replace('..\/..\/','__PUBLIC__/'))
+            .pipe(replace('<a href="..\/','<a href="__APP__/'))
+            .pipe(htmlreplace({
+                js : {
+                    src : '',
+                    tpl : ''
+                }
+            }))
+            .pipe(gulp.dest(disHtmlPath));
 });
 
 gulp.task('clean',function() {
-	return gulp.src(disHtmlPath, {read: true})
-		.pipe(clean());
+    return gulp.src(disHtmlPath, {read: true})
+        .pipe(clean());
 });
-gulp.task('build',['clean'],function() {
-	gulp.start('view','ugjs','css');
+gulp.task('build',function() {
+    NODE_ENV = 'public';
+	gulp.start('view','ugjs','css','component','iconfont','images');
+});
+gulp.task('auto',function() {
+    gulp.watch([csspath],['css']);
+    gulp.watch([jspath],['ugjs']);
+    gulp.watch([htmlpath],['view']);
+    gulp.watch('./src/component/*.html',['component']);
 });
 
-gulp.task('auto',function() {
-	gulp.watch([csspath],['css']);
-	gulp.watch([jspath],['ugjs']);
-	gulp.watch([htmlpath],['view']);
-});
 gulp.task('reload',function() {
 
 	var htmlFiles = htmlpath;
 
 	browserSync.init(htmlFiles,{
 		startPath : "views/Index",
-		server: path
-	});
-	gulp.watch([csspath, jspath]).on('change',bsReload);
-});
-
-gulp.task('myreload',function() {
-
-	var htmlFiles = htmlpath;
-
-	browserSync.init(htmlFiles,{
-		startPath : "views/Index",
 		server: path,
-		proxy : "192.163.31.106"
+        notify:false
 	});
-	gulp.watch([csspath, jspath]).on('change', bsReload);
+    gulp.watch([csspath, jspath]).on('change',bsReload);
 });
