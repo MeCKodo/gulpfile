@@ -71,7 +71,15 @@ gulp.task('view',['clean'],function() {
             }))
             .pipe(gulp.dest(disHtmlPath));
 });
-
+gulp.task('base64', function () {
+    gulp.src(csspath)
+        .pipe(base64({
+            extensions: ['svg', 'png', /\.jpg#datauri$/i],
+            maxImageSize: 10*1024 // bytes,
+        }))
+        .pipe(gulp.dest(disCssPath))
+        .pipe(gulp.dest('.'+disCssPath));
+});
 gulp.task('clean',function() {
     return gulp.src(disHtmlPath, {read: true})
         .pipe(clean());
