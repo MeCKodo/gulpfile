@@ -78,7 +78,7 @@ gulp.task('base64', function () {
         }))
         .pipe(gulp.dest(disCssPath))
         .pipe(gulp.dest('.'+disCssPath));
-});
+}); 
 gulp.task('clean',function() {
     return gulp.src(disHtmlPath, {read: true})
         .pipe(clean());
