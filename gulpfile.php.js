@@ -2,13 +2,14 @@ var gulp = require('gulp'),
     ugjs = require('gulp-uglify'),
     minicss = require('gulp-minify-css'),
     imagemin = require('gulp-imagemin'),
-    //rename = require('gulp-rename'),
+    rename = require('gulp-rename'),
     clean = require('gulp-clean'),
     replace = require('gulp-replace'),
     rev = require('gulp-rev-append'),
     ifElse = require('gulp-if-else'),
     htmlreplace = require('gulp-html-replace'),
     browserSync = require('browser-sync').create(),
+    base64 = require('gulp-base64'),
     bsReload = browserSync.reload;
 
 var path = './src/',
@@ -32,11 +33,17 @@ gulp.task('ugjs',function() {
         .pipe(replace('../../','../../Public/'))
         .pipe(ifElse(NODE_ENV === 'public',ugjs))
         .pipe(gulp.dest(disJsPath))
+        .pipe(gulp.dest('.'+disJsPath));
 });
 gulp.task('css',function() {
 	gulp.src(csspath)
 		.pipe(ifElse(NODE_ENV === 'public',minicss))
+        .pipe(base64({
+            extensions: ['png', /\.jpg#datauri$/i],
+            maxImageSize: 10*1024 // bytes,
+        }))
 		.pipe(gulp.dest(disCssPath))
+        .pipe(gulp.dest('.'+disCssPath));
 });
 gulp.task('images', function () {
     return gulp.src('src/images/**/*.*')
@@ -70,19 +77,12 @@ gulp.task('view',['clean'],function() {
             }))
             .pipe(gulp.dest(disHtmlPath));
 });
-gulp.task('base64', function () {
-    gulp.src(csspath)
-        .pipe(base64({
-            extensions: ['svg', 'png', /\.jpg#datauri$/i],
-            maxImageSize: 10*1024 // bytes,
-        }))
-        .pipe(gulp.dest(disCssPath))
-        .pipe(gulp.dest('.'+disCssPath));
-}); 
+
 gulp.task('clean',function() {
     return gulp.src(disHtmlPath, {read: true})
         .pipe(clean());
 });
+
 gulp.task('build',function() {
     NODE_ENV = 'public';
 	gulp.start('view','ugjs','css','component','iconfont','images');
@@ -105,3 +105,4 @@ gulp.task('reload',function() {
 	});
     gulp.watch([csspath, jspath]).on('change',bsReload);
 });
+
