@@ -1,9 +1,11 @@
+#### 2016/01/01
+> * 本次新增postCSS+sass配置  
+
 ```javascript
 var gulp = require('gulp'),
     ugjs = require('gulp-uglify'),
-    minicss = require('gulp-minify-css'),
+    //minicss = require('gulp-minify-css'),
     imagemin = require('gulp-imagemin'),
-    rename = require('gulp-rename'),
     clean = require('gulp-clean'),
     replace = require('gulp-replace'),
     rev = require('gulp-rev-append'),
@@ -13,8 +15,16 @@ var gulp = require('gulp'),
     base64 = require('gulp-base64'),
     bsReload = browserSync.reload;
 
+var postcss = require('gulp-postcss'); //postcss本身
+var autoprefixer = require('autoprefixer');
+var precss = require('precss'); //提供像scss一样的语法
+var cssnano = require('cssnano');  //更好用的css压缩!
+var sass = require('gulp-sass');
+var sourcemaps = require('gulp-sourcemaps');
+
 var path = './src/',
     csspath = './src/css/**/*.css',
+    sasspath = './src/sass/**/*.scss',
     jspath = './src/js/**/*.js',
     htmlpath = './src/views/**/*.html',
     ifonpath = './src/webfont/**';
@@ -33,32 +43,44 @@ gulp.task('ugjs',function() {
         .pipe(replace('__target__',urlTag))
         .pipe(replace('../../','../../Public/'))
         .pipe(ifElse(NODE_ENV === 'public',ugjs))
-        .pipe(gulp.dest(disJsPath))
-        .pipe(gulp.dest('.'+disJsPath));
+        .pipe(gulp.dest(disJsPath));
 });
 gulp.task('css',function() {
+    var processes = [cssnano];
+
 	gulp.src(csspath)
-		.pipe(ifElse(NODE_ENV === 'public',minicss))
+		.pipe(ifElse(NODE_ENV === 'public',function() {
+            return postcss(processes)
+        }))
         .pipe(base64({
             extensions: ['png', /\.jpg#datauri$/i],
             maxImageSize: 10*1024 // bytes,
         }))
-		.pipe(gulp.dest(disCssPath))
-        .pipe(gulp.dest('.'+disCssPath));
+	.pipe(gulp.dest(disCssPath));
+});
+gulp.task('sass',function() {
+    var processes = [
+        autoprefixer({browsers: ['last 3 version']}),
+        precss // background: color($blue blackness(20%));  precss为了用这样的语法
+    ];
+    return gulp.src(sasspath)
+        .pipe(sourcemaps.init())
+        .pipe(sass().on('error', sass.logError))
+        .pipe(postcss(processes))
+        .pipe(sourcemaps.write('./maps'))
+        .pipe(gulp.dest('./src/css'));
 });
 gulp.task('images', function () {
     return gulp.src('src/images/**/*.*')
             .pipe(imagemin({
                 progressive: true
             }))
-            .pipe(gulp.dest('Public/images'))
-            .pipe(gulp.dest('../Public/images'));
+            .pipe(gulp.dest('Public/images'));
 });
 gulp.task('component',function() {
    return gulp.src('./src/component/*.html')
             .pipe(replace('__target__',urlTag))
-            .pipe(gulp.dest('Public/component'))
-            .pipe(gulp.dest('../Public/component'));
+            .pipe(gulp.dest('Public/component'));
 });
 gulp.task('iconfont', function () {
     return gulp.src(ifonpath)
@@ -86,10 +108,11 @@ gulp.task('clean',function() {
 
 gulp.task('build',function() {
     NODE_ENV = 'public';
-	gulp.start('view','ugjs','css','component','iconfont','images');
+	gulp.start('view','ugjs','sass','css','component','iconfont','images');
 });
 gulp.task('auto',function() {
     gulp.watch([csspath],['css']);
+    //gulp.watch([sasspath],['sass']);
     gulp.watch([jspath],['ugjs']);
     gulp.watch([htmlpath],['view']);
     gulp.watch('./src/component/*.html',['component']);
@@ -102,12 +125,10 @@ gulp.task('reload',function() {
 	browserSync.init(htmlFiles,{
 		startPath : "views/Index",
 		server: path,
-        notify:false
+        	notify:false
 	});
-    gulp.watch([csspath, jspath]).on('change',bsReload);
+    gulp.watch([sasspath,csspath, jspath]).on('change',bsReload);
 });
-
-
 
 ```
 
