@@ -60,7 +60,7 @@ gulp.task('css',function() {
 });
 gulp.task('sass',function() {
     var processes = [
-        autoprefixer({browsers: ['last 3 version']}),
+        autoprefixer({browsers: ['last 2 version', 'safari 5', 'opera 12.1', 'ios 6', 'android 4']}),
         precss // background: color($blue blackness(20%));  precss为了用这样的语法
     ];
     return gulp.src(sasspath)
