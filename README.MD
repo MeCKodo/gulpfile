@@ -116,7 +116,7 @@ gulp.task('build',function() {
     //gulp.watch('./src/component/*.html',['component']);
 //});
 
-gulp.task('collegereload',function() {
+gulp.task('reload',function() {
 
     browserSync.init(chtmlpath,{
         startPath : "/views/",
