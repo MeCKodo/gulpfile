@@ -13,6 +13,7 @@ var gulp = require('gulp'),
     htmlreplace = require('gulp-html-replace'),
     browserSync = require('browser-sync').create(),
     base64 = require('gulp-base64'),
+    runSequence = require('run-sequence'),
     bsReload = browserSync.reload;
 
 var postcss = require('gulp-postcss'); //postcss本身
@@ -60,7 +61,7 @@ gulp.task('css',function() {
 });
 gulp.task('sass',function() {
     var processes = [
-        autoprefixer({browsers: ['last 2 version', 'safari 5', 'opera 12.1', 'ios 6', 'android 4']}),
+        autoprefixer({browsers: ['last 2 version', 'safari 5', 'opera 12.1', 'ios 6', 'android 4','> 10%']}),
         precss // background: color($blue blackness(20%));  precss为了用这样的语法
     ];
     return gulp.src(sasspath)
@@ -70,6 +71,7 @@ gulp.task('sass',function() {
         .pipe(sourcemaps.write('./maps'))
         .pipe(gulp.dest('./src/css'));
 });
+
 gulp.task('images', function () {
     return gulp.src('src/images/**/*.*')
             .pipe(imagemin({
@@ -77,11 +79,7 @@ gulp.task('images', function () {
             }))
             .pipe(gulp.dest('Public/images'));
 });
-gulp.task('component',function() {
-   return gulp.src('./src/component/*.html')
-            .pipe(replace('__target__',urlTag))
-            .pipe(gulp.dest('Public/component'));
-});
+
 gulp.task('iconfont', function () {
     return gulp.src(ifonpath)
         .pipe(gulp.dest(disifonpath));
@@ -110,25 +108,33 @@ gulp.task('build',function() {
     NODE_ENV = 'public';
 	gulp.start('view','ugjs','sass','css','component','iconfont','images');
 });
-gulp.task('auto',function() {
-    gulp.watch([csspath],['css']);
+//gulp.task('auto',function() {
+    //gulp.watch([csspath],['css']);
     //gulp.watch([sasspath],['sass']);
-    gulp.watch([jspath],['ugjs']);
-    gulp.watch([htmlpath],['view']);
-    gulp.watch('./src/component/*.html',['component']);
+    //gulp.watch([jspath],['ugjs']);
+    //gulp.watch([htmlpath],['view']);
+    //gulp.watch('./src/component/*.html',['component']);
+//});
+
+gulp.task('collegereload',function() {
+
+    browserSync.init(chtmlpath,{
+        startPath : "/views/",
+        server: cpath,
+        notify:false
+    });
+    //gulp.watch([csasspath],['collegesass']);
+    gulp.watch([csasspath]).on('change',function() {
+        runSequence('collegesass', 'collegecss',function() {
+            bsReload();
+        });
+    });
+    gulp.watch([cjspath],['collegejs']).on('change',bsReload);
+    gulp.watch([chtmlpath],['collegeview']).on('change',bsReload);
+
 });
 
-gulp.task('reload',function() {
 
-	var htmlFiles = htmlpath;
-
-	browserSync.init(htmlFiles,{
-		startPath : "views/Index",
-		server: path,
-        	notify:false
-	});
-    gulp.watch([sasspath,csspath, jspath]).on('change',bsReload);
-});
 
 ```
 
