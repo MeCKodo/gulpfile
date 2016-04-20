@@ -118,7 +118,7 @@ gulp.task('build',function() {
 
 gulp.task('reload',function() {
 
-    browserSync.init(chtmlpath,{
+    browserSync.init(htmlpath,{
         startPath : "/views/",
         server: cpath,
         notify:false
